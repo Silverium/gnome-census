@@ -1,0 +1,37 @@
+<form name="filterForm" ng-submit="filterForm.$valid && filterCtrl.makeRequest()" novalidate>
+    <div id="filter-panel" class="collapse panel panel-body">
+        <div class="form-group row">
+            <label for="professions-input" class="col-2 col-form-label">Professions</label>
+            <div class="col-10">
+                <input class="form-control" type="text" id="professions-input" ng-model="filterCtrl.filter.data.professions">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="hair_color-input" class="col-2 col-form-label">Hair Color</label>
+            <div class="col-10">
+                <input class="form-control" type="text" id="hair_color-input" ng-model="filterCtrl.filter.data.hairColor">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="id-input" class="col-2 col-form-label">Id</label>
+            <div class="col-10">
+                <input class="form-control" type="number" id="id-input" ng-model="filterCtrl.filter.data.id">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="items_per_page-input" class="col-2 col-form-label">Items per page</label>
+            <input class="form-control" type="number" id="items_per_page-input" ng-model="filterCtrl.filter.data.itemsPerPage" min="1" required>
+        </div>
+
+        <div class="row col">
+            <button type="submit" class="btn btn-primary" ng-class="{disabled : !filterForm.$valid}">Submit</button>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#filter-panel">
+        <span class="glyphicon glyphicon-search"></span> Advanced Search
+    </button>
+</form>

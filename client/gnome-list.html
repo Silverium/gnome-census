@@ -1,0 +1,18 @@
+<ul class="list-group">
+    <li class="list-group-item" ng-repeat="gnome in listCtrl.list.entries">
+        <h3>
+            {{gnome.name}}
+            <em class="pull-right">Age: {{gnome.age}}</em>
+        </h3>
+
+        <img class="img img-circle img-thumbnail center-block" ng-src="{{gnome.thumbnail}}" />
+
+        <!-- I could also use a directive attribute "gnome-tabs" here, but since 
+            directive attributes should only be used for mixin behaviors, like
+            tooltips I decide to keep it this way
+        -->
+        <section class="tab">
+            <gnome-tabs></gnome-tabs>
+        </section>
+    </li>
+</ul>

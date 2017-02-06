@@ -1,0 +1,11 @@
+<ul class="pagination pagination-lg justify-content-center">
+    <li class="page-item" ng-class="{disabled : pgCtrl.isPreviousDisabled()}">
+        <a class="page-link" href="" ng-click="pgCtrl.previous()">Previous</a>
+    </li>
+    <li class="page-item" ng-class="{active : pgCtrl.isSelected(page+1)}" ng-repeat="page in pgCtrl.data.pagination.numberList">
+        <a class="page-link" href="" ng-click="pgCtrl.setPage(page+1)">{{page+1}}</a>
+    </li>
+    <li class="page-item" ng-class="{disabled : pgCtrl.isNextDisabled()}">
+        <a class="page-link" href="" ng-click="pgCtrl.next()">Next</a>
+    </li>
+</ul>
