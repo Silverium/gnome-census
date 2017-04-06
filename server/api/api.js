@@ -1,20 +1,20 @@
 "use strict";
 
-let _ = require("underscore");
-let HTTPStatus = require('http-status');
-let express = require("express");
-let jsonfile = require("jsonfile");
-let request = require("request");
-let Promise = require("promise");
-let gender = require("gender-guess");
+const HTTPStatus = require('http-status');
+const express = require("express");
+const jsonfile = require("jsonfile");
+const request = require("request");
+const Promise = require("promise");
+const gender = require("gender-guess");
+const normalize = require("../utils/normalize");
 
-let read = Promise.denodeify(jsonfile.readFile);
-let HTTPGet = Promise.denodeify(request);
+const read = Promise.denodeify(jsonfile.readFile);
+const HTTPGet = Promise.denodeify(request);
 
 const CONFIG_PATH = "./config.json";
 
-module.exports = function() {
-    let app = express();
+module.exports = (function() {
+    const api = express.Router();
 
     let pagination;
     let dbConnection;
@@ -26,13 +26,10 @@ module.exports = function() {
             pagination = config.pagination;
         });
 
-    let normalize = function(input) {
-        // or I could use Array.isArray(obj)
-        return (_.isArray(input) ? input.map(item => item.toLowerCase().trim()) : input.toLowerCase().trim());
-    };
+    
 
     //Allow CORS!
-    app.use(function(req, res, next) {
+    api.use(function(req, res, next) {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         next();
@@ -42,11 +39,11 @@ module.exports = function() {
      * Ideally I would return an HTML explaining how to use this API with 
      * examples and all that jazz
      */
-    app.get("/", (req, res, next) => {
-        res.send("Usage of the API is /api/v1/gnomes/");
+    api.get("/", (req, res, next) => {
+        res.send("Usage of the API is /gnomes/");
     });
 
-    app.get("/api/v1/gnomes/", (req, res, next) => {
+    api.get("/gnomes/", (req, res, next) => {
 
         //lets imagine this is a request to a database
         HTTPGet(dbConnection)
@@ -59,66 +56,53 @@ module.exports = function() {
                  */
                 let matchingEntries = JSON.parse(data.body).Brastlewark;
 
-                let responseObj = {};
+                const responseObj = {};
                 responseObj.entries = [];
                 responseObj.totalPages = 1;
 
                 try {
                     if (req.query.id) {
-                        let gnomeId = +normalize(req.query.id);
+                        const gnomeId = +normalize(req.query.id);
 
-                        //check filter  VS find
                         //Using Filter to allow compatibility with the other 
                         //search options
-                        matchingEntries = _.filter(matchingEntries, gnome => {
-                            return gnome.id === gnomeId;
-                        });
+                        matchingEntries = matchingEntries.filter(gnome => gnome.id === gnomeId);
                     }
 
                     if (req.query.professions) {
-                        let inputProfessions = normalize(req.query.professions.split(","));
+                        const inputProfessions = normalize(req.query.professions.split(","));
                         let gnomeProfessions;
 
-                        matchingEntries = _.filter(matchingEntries, gnome => {
+                        matchingEntries = matchingEntries.filter( gnome => {
                             gnomeProfessions = normalize(gnome.professions);
-
-                            return _.every(inputProfessions, prof => {
-                                return _.contains(gnomeProfessions, prof);
-                            });
-
-                            //this is an alternative way of doing it using ECMA6
-                            // return gnomeProfessions.every(prof => _.contains(gnomeProfessions, prof));
+                            return inputProfessions.every( prof => gnomeProfessions.includes(prof));
                         });
                     }
 
                     //Our heroes may have a fetiche of some kind ... don't ask me ...
                     if (req.query.hairColor) {
-                        let hairColor = normalize(req.query.hairColor);
-
-                        matchingEntries = _.filter(matchingEntries, gnome => {
-                            return normalize(gnome.hair_color) === hairColor;
-                        });
+                        const hairColor = normalize(req.query.hairColor);
+                        matchingEntries = matchingEntries.filter(gnome => normalize(gnome.hair_color) === hairColor);
                     }
                 }
                 catch (Exception) {
                     res.status(HTTPStatus.INTERNAL_SERVER_ERROR);
-                    res.send(JSON.stringify({
+                    res.json({
                         code: HTTPStatus.INTERNAL_SERVER_ERROR,
                         message: "The server crashed into a horrible death while filtering your request",
                         info: Exception
                             //Ideally, would also add URL for extra documentation.
-                    }));
+                    });
                     return;
                 }
 
-                // or I could use _.isEmpty(result)
-                if (matchingEntries.length === 0) {
+                if (matchingEntries.filter(each=>each !== undefined && each !== null).length === 0) {
                     res.status(HTTPStatus.NOT_FOUND);
-                    res.send(JSON.stringify({
+                    res.json({
                         code: HTTPStatus.NOT_FOUND,
                         message: "The resource you were looking for was not found"
                             //Ideally, would also add URL for extra documentation.
-                    }));
+                    });
                     return;
                 }
 
@@ -127,10 +111,10 @@ module.exports = function() {
 
                 if (itemsPerPage < 1 || pageNum < 1) {
                     res.status(HTTPStatus.BAD_REQUEST);
-                    res.send(JSON.stringify({
+                    res.json({
                         code: HTTPStatus.BAD_REQUEST,
                         message: "The pagination parameters are incorrect. All pagination parameters must be > 0.",
-                    }));
+                    });
                     return;
                 }
                 
@@ -154,16 +138,16 @@ module.exports = function() {
             })
             .catch((Exception) => {
                 res.status(HTTPStatus.INTERNAL_SERVER_ERROR);
-                res.send(JSON.stringify({
+                res.json({
                         code: HTTPStatus.INTERNAL_SERVER_ERROR,
                         message: "The server found unknown problems while processing the request",
                         info: Exception
                         //Ideally, would also add URL for extra documentation.
-                    }));
+                    });
                 //We would write this into a log file for later evaluation
                 console.log(Exception);
             });
     });
 
-    return app;
-};
+    return api;
+}());
