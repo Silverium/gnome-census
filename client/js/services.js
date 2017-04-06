@@ -9,19 +9,12 @@
 
         list.request = function(params) {
 
-            let paramsStr = "";
-            if (params) {
-                paramsStr += "?";
-               
-                for (let entry of Object.entries(params)) {
-                    if (entry[1] !== null && entry[1] !== "undefined")
-                        paramsStr += entry[0] + "=" + entry[1] + "&";
-                }
-                //remove last ampersand
-                paramsStr = paramsStr.slice(0, -1);
-            }
+            const paramsStr = Object.entries(params).reduce((prev, curr) => {
+                prev += curr[0] + '=' + curr[1] + '&';
+                return prev;
+            }, "?").slice(0, -1).replace(' ', '');
 
-            const theUrl = 'https://restful-api-example-silveriumgoogler.c9users.io/api/v1/gnomes/' + paramsStr;
+            const theUrl = 'https://restful-api-example-silveriumgoogler.c9users.io/api/v1/gnomes' + paramsStr;
 
             console.log(theUrl);
 
@@ -48,14 +41,12 @@
         return list;
     });
 
-    app.factory("FilterService", function() {
-        const filter = {data:{}};
-        // filter.data = {};
-
-        filter.reset = function() {
-            filter.data = {};
-        };
-
-        return filter;
+    app.factory("FilterService", () => {
+        return {
+            data: {},
+            reset: function() {
+                this.data = {}
+            }
+        }
     });
 }());
